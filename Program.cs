@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
+using System.IO;
 using System.Linq;
+using CsvHelper;
 
 namespace FirstBankOfSuncoast
 {
@@ -17,6 +20,11 @@ namespace FirstBankOfSuncoast
         static List<Transaction> Transactions = new List<Transaction>();
         static void Main(string[] args)
         {
+            var fileReader = new StreamReader("accounts.csv");
+            var csvReader = new CsvReader(fileReader, CultureInfo.InvariantCulture);
+
+
+
             // Main Menu
             while (true)
             {
@@ -79,7 +87,7 @@ namespace FirstBankOfSuncoast
             // TODO: Write to file.
             PrintBalance(account);
         }
-
+    
         static void Withdrawal(string account)
         {
             Console.Clear();
