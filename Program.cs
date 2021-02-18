@@ -40,7 +40,7 @@ namespace FirstBankOfSuncoast
                         Deposit("Checking");
                         break;
                     case 2:
-                        Withdrawl("Checking");
+                        Withdrawal("Checking");
                         break;
                     case 3:
                         PrintBalance("Checking");
@@ -49,7 +49,7 @@ namespace FirstBankOfSuncoast
                         Deposit("Savings");
                         break;
                     case 5:
-                        Withdrawl("Savings");
+                        Withdrawal("Savings");
                         break;
                     case 6:
                         PrintBalance("Savings");
@@ -80,11 +80,11 @@ namespace FirstBankOfSuncoast
             PrintBalance(account);
         }
 
-        static void Withdrawl(string account)
+        static void Withdrawal(string account)
         {
             Console.Clear();
-            Console.WriteLine($"Withdrawl from {account}");
-            var amount = GetIntegerFromUser("How much do you want to withdraw?");
+            Console.WriteLine($"Withdrawal from {account}");
+            var amount = GetMoneyFromUser("How much do you want to withdraw?");
             var transaction = new Transaction()
             {
                 Type = "Withdrawal",
@@ -102,10 +102,16 @@ namespace FirstBankOfSuncoast
         {
             // TODO: Implement Balance Correctly
             var depositTotal = Transactions
-              .Where(t => t.Account == account)
+              .Where(t => t.Type == "Deposit" && t.Account == account)
               .Sum(t => t.Amount);
+
+            var withdrawalTotal = Transactions
+              .Where(t => t.Type == "Withdrawal" && t.Account == account)
+              .Sum(t => t.Amount);
+
+            var balanceTotal = (depositTotal - withdrawalTotal);
             Console.Clear();
-            Console.WriteLine($"Balance of {account}: {depositTotal}");
+            Console.WriteLine($"Balance of {account}: {balanceTotal}");
             Console.WriteLine("Press any key to continue...");
             Console.ReadKey();
         }
