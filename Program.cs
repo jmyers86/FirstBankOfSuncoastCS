@@ -84,8 +84,16 @@ namespace FirstBankOfSuncoast
                 Amount = amount,
             };
             Transactions.Add(transaction);
+
+            var fileWriter = new StreamWriter("accounts.csv");
+            var csvWriter = new CsvWriter(fileWriter, CultureInfo.InvariantCulture);
+
+            csvWriter.WriteRecords(Transactions);
+            fileWriter.Close();
             // TODO: Write to file.
             PrintBalance(account);
+
+            Console.ReadKey();
         }
     
         static void Withdrawal(string account)
@@ -100,6 +108,11 @@ namespace FirstBankOfSuncoast
                 Amount = amount,
             };
             Transactions.Add(transaction);
+            var fileWriter = new StreamWriter("accounts.csv");
+            var csvWriter = new CsvWriter(fileWriter, CultureInfo.InvariantCulture);
+
+            csvWriter.WriteRecords(Transactions);
+            fileWriter.Close();
             PrintBalance(account);
 
             // TODO: Implement Withdrawl
