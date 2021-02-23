@@ -1,40 +1,36 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Globalization;
-using System.IO;
 using System.Linq;
 using CsvHelper;
+using System.IO;
+using System.Globalization;
 
 namespace FirstBankOfSuncoast
 {
     class Transaction
     {
-        public string Type;
-        public int Amount;
-        public string Account;
-
+        public string Type { get; set; }
+        public int Amount { get; set; }
+        public string Account { get; set; }
     }
 
     class Program
     {
+        static int PENNIES_PER_DOLLAR = 100;
         static List<Transaction> Transactions = new List<Transaction>();
         static void Main(string[] args)
         {
-            var fileReader = new StreamReader("accounts.csv");
-            var csvReader = new CsvReader(fileReader, CultureInfo.InvariantCulture);
-
-
-
-            // Main Menu
-            while (true)
+            LoadTransactions();
+            var isRunning = true;
+            while (isRunning)
             {
                 Console.Clear();
                 Console.WriteLine("1) Deposit to Checking");
-                Console.WriteLine("2) Withdrawl from Checking");
+                Console.WriteLine("2) Withdraw from Checking");
                 Console.WriteLine("3) Show Checking Balance");
                 Console.WriteLine("");
                 Console.WriteLine("4) Deposit to Savings");
-                Console.WriteLine("5) Withdrawl from Savings");
+                Console.WriteLine("5) Withdraw from Savings");
                 Console.WriteLine("6) Show Savings Balance");
 
                 var option = GetIntegerFromUser("Choose an option (1-6) or 0 to quit.");
@@ -43,12 +39,13 @@ namespace FirstBankOfSuncoast
                 {
                     case 0:
                         Console.WriteLine("Goodbye.");
+                        isRunning = false;
                         break;
                     case 1:
                         Deposit("Checking");
                         break;
                     case 2:
-                        Withdrawal("Checking");
+                        Withdraw("Checking");
                         break;
                     case 3:
                         PrintBalance("Checking");
@@ -57,7 +54,7 @@ namespace FirstBankOfSuncoast
                         Deposit("Savings");
                         break;
                     case 5:
-                        Withdrawal("Savings");
+                        Withdraw("Savings");
                         break;
                     case 6:
                         PrintBalance("Savings");
@@ -67,8 +64,6 @@ namespace FirstBankOfSuncoast
                         Console.ReadKey();
                         break;
                 }
-
-                if (option == 0) break;
             }
         }
 
@@ -84,57 +79,52 @@ namespace FirstBankOfSuncoast
                 Amount = amount,
             };
             Transactions.Add(transaction);
-
-            var fileWriter = new StreamWriter("accounts.csv");
-            var csvWriter = new CsvWriter(fileWriter, CultureInfo.InvariantCulture);
-
-            csvWriter.WriteRecords(Transactions);
-            fileWriter.Close();
-            // TODO: Write to file.
+            PersistTransactions();
             PrintBalance(account);
-
-            Console.ReadKey();
         }
-    
-        static void Withdrawal(string account)
+
+        static void Withdraw(string account)
         {
             Console.Clear();
-            Console.WriteLine($"Withdrawal from {account}");
+            Console.WriteLine($"Withdraw into {account}");
             var amount = GetMoneyFromUser("How much do you want to withdraw?");
             var transaction = new Transaction()
             {
-                Type = "Withdrawal",
+                Type = "Withdraw",
                 Account = account,
                 Amount = amount,
             };
-            Transactions.Add(transaction);
-            var fileWriter = new StreamWriter("accounts.csv");
-            var csvWriter = new CsvWriter(fileWriter, CultureInfo.InvariantCulture);
 
-            csvWriter.WriteRecords(Transactions);
-            fileWriter.Close();
+            if (GetBalance(account) >= transaction.Amount)
+            {
+                Transactions.Add(transaction);
+                PersistTransactions();
+            }
+            else
+            {
+                Console.WriteLine("Insufficient Funds.");
+            }
             PrintBalance(account);
-
-            // TODO: Implement Withdrawl
-            Console.ReadKey();
         }
 
         static void PrintBalance(string account)
         {
-            // TODO: Implement Balance Correctly
+            Console.WriteLine($"Balance of {account}: {FormatMoney(GetBalance(account))}");
+            Console.Write("\nPress any key to continue...");
+            Console.ReadKey();
+        }
+
+        static int GetBalance(string account)
+        {
             var depositTotal = Transactions
               .Where(t => t.Type == "Deposit" && t.Account == account)
               .Sum(t => t.Amount);
 
-            var withdrawalTotal = Transactions
-              .Where(t => t.Type == "Withdrawal" && t.Account == account)
+            var withdrawTotal = Transactions
+              .Where(t => t.Type == "Withdraw" && t.Account == account)
               .Sum(t => t.Amount);
 
-            var balanceTotal = (depositTotal - withdrawalTotal);
-            Console.Clear();
-            Console.WriteLine($"Balance of {account}: {balanceTotal}");
-            Console.WriteLine("Press any key to continue...");
-            Console.ReadKey();
+            return depositTotal - withdrawTotal;
         }
 
         static int GetIntegerFromUser(string message)
@@ -164,7 +154,35 @@ namespace FirstBankOfSuncoast
                 input = Console.ReadLine();
             } while (!float.TryParse(input, out valueInDollars));
 
-            return Convert.ToInt32(valueInDollars * 100);
+            return Convert.ToInt32(valueInDollars * PENNIES_PER_DOLLAR);
+        }
+
+        static string FormatMoney(int amountInCents)
+        {
+            double amountInDollars = Convert.ToDouble(amountInCents) / PENNIES_PER_DOLLAR;
+            return amountInDollars.ToString("C2");
+        }
+        static void PersistTransactions()
+        {
+            var fileWriter = new StreamWriter("transactions.csv");
+            var csvWriter = new CsvWriter(fileWriter, CultureInfo.InvariantCulture);
+            csvWriter.WriteRecords(Transactions);
+            fileWriter.Close();
+        }
+
+        static void LoadTransactions()
+        {
+            try
+            {
+                var fileReader = new StreamReader("transactions.csv");
+                var csvReader = new CsvReader(fileReader, CultureInfo.InvariantCulture);
+                Transactions = csvReader.GetRecords<Transaction>().ToList();
+                fileReader.Close();
+            }
+            catch (System.IO.FileNotFoundException)
+            {
+
+            }
         }
     }
 }
